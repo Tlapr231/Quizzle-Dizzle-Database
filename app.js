@@ -75,18 +75,29 @@ app.get('/api/questions/:id', (req, res) => {
 
 
 //====================================//
-//============= | POST | =============// (update)
+//============= | POST | =============// (new)
 //====================================//
 
 //QUIZ
 app.post('/api/quizes', (req, res) => {
-    console.log(`Recieved post request with body = ${JSON.stringify(req.body)}`)
+    console.log(`Recieved post request for quizes`);
+    
+    //object destructuring on error
+    const { error } = validateQuiz(req.body);
+    
+    //400 Bad Request
+    if (error) return res.status(400).send(error); 
 
-//TODO
     const quiz = {
+        id: data.quizes.length + 1,
+        numberOfQuestions: req.body.numberOfQuestions ,  
+        category: req.body.category , 
+        difficulty: req.body.difficulty , 
+        questions: req.body.questions         
+    };
 
-    } 
-
+    data.quizes.push(quiz);
+    res.send(quiz);
 })
 
 //QUESTIONS
@@ -111,13 +122,38 @@ app.post('/api/questions', (req, res) => {
     data.questions.push(question);
     res.send(question);
 });
-
+ 
 //===================================//
 //============= | PUT | =============// (update)
 //===================================//
 
+//QUIZ
+app.put('/api/quizes/:id', (req, res) => {
+    console.log(`Updating quiz`);
+
+    const quiz = data.quizes.find(q => q.id === parseInt(req.params.id));
+
+    //404 Not Found
+    if(!quiz) return res.status(404).send('The quiz with the given ID was not found.');  
+    
+    //object destructuring on error
+    const { error } = validateQuiz(req.body);
+    
+    //400 Bad Request
+    if (error) return res.status(400).send(error); 
+
+    quiz.numberOfQuestions = req.body.numberOfQuestions;
+    quiz.category = req.body.category;
+    quiz.difficulty = req.body.difficulty;
+    quiz.questions = req.body.questions;
+    
+    res.send(question);
+});
+
 //QUESTIONS
 app.put('/api/questions/:id', (req, res) => {
+    console.log(`Updating question`);
+
     const question = data.questions.find(q => q.id === parseInt(req.params.id));
 
     //404 Not Found
@@ -136,15 +172,30 @@ app.put('/api/questions/:id', (req, res) => {
     question.incorrect_answers = req.body.incorrect_answers;
     
     res.send(question);
-    
 });
 
 //====================================//
 //============ | DELETE | ============//
 //====================================//
 
+//QUIZ
+app.delete('/api/quizes/:id', (req, res) => {
+    console.log(`Deleting quiz`);
+
+    const quiz = data.quizes.find(q => q.id === parseInt(req.params.id));
+    //404 Not Found
+    if(!quiz) { return res.status(404).send('The quiz with the given ID was not found.'); } 
+    
+    const index = data.quizes.indexOf(quiz);
+    data.quizes.splice(index, 1);
+
+    res.send(quiz);
+});
+
 //QUESTIONS
 app.delete('/api/questions/:id', (req, res) => {
+    console.log(`Deleting question`);
+
     const question = data.questions.find(q => q.id === parseInt(req.params.id));
     //404 Not Found
     if(!question) { return res.status(404).send('The question with the given ID was not found.'); } 
@@ -154,6 +205,10 @@ app.delete('/api/questions/:id', (req, res) => {
 
     res.send(question);
 });
+
+//===================================//
+//========== | FUNCTIONS | ==========//
+//===================================//
 
 function validateQuestion(question) {
     const schema = {
@@ -169,7 +224,7 @@ function validateQuestion(question) {
 
 function validateQuiz(quiz) { 
     const schema = {
-        numberOfQuestions: Joi.integer().required(),
+        numberOfQuestions: Joi.number().required(),
         category: Joi.string().required(),
         difficulty: Joi.string().required(),
         questions: Joi.array().required().length(numberOfQuestions),
@@ -179,16 +234,44 @@ function validateQuiz(quiz) {
 }
 
 
-//=-=-=-=-=-=-=-= TEST CASE =-=-=-=-=-=-=-=
-// {
-//     "category": "Science: Computers",
-//     "type": "multiple",
-//     "difficulty": "easy",
-//     "question": "In computing, what does MIDI stand for?",
-//     "correct_answer": "Musical Instrument Digital Interface",
-//     "incorrect_answers": [
-//         "Musical Interface of Digital Instruments",
-//         "Modular Interface of Digital Instruments",
-//         "Musical Instrument Data Interface"
-//     ]
-// }
+//===================================//
+//========== | TEST CASE | ==========//
+//===================================//
+/*
+--- Quiz ---
+
+{
+    "id": 1000,
+    "numberOfQuestions": 10,
+    "category": "Entertainment: Film",
+    "difficulty": "mixed",
+    "questions": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+    ]
+}
+
+--- question ---
+
+{
+    "category": "Science: Computers",
+    "type": "multiple",
+    "difficulty": "easy",
+    "question": "In computing, what does MIDI stand for?",
+    "correct_answer": "Musical Instrument Digital Interface",
+    "incorrect_answers": [
+        "Musical Interface of Digital Instruments",
+        "Modular Interface of Digital Instruments",
+        "Musical Instrument Data Interface"
+    ]
+}
+
+*/

@@ -1,0 +1,23 @@
+{
+  "name": "Quiz-Database",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tlapr231/Quizzle-Dizzle-Database.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Tlapr231/Quizzle-Dizzle-Database/issues"
+  },
+  "homepage": "https://github.com/Tlapr231/Quizzle-Dizzle-Database#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

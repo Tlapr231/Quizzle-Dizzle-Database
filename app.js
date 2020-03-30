@@ -1,6 +1,10 @@
+const Joi = require('joi');
 const express = require('express');
 const app = express();
 
+app.use(express.json());
+
+//Initial Data for testing.
 const data = {
     quizes: [
       { id: 1000, "numberOfQuestions": 10, category: "Entertainment: Film", difficulty: "mixed", questions: [    
@@ -58,7 +62,7 @@ app.get('/api/quizes/:id', (req, res) => {
     } else {
         res.send(quiz);
     }
-})
+});
 
 //Question Data
 app.get('/api/questions', (req, res) => {
@@ -76,12 +80,63 @@ app.get('/api/questions/:id', (req, res) => {
     } else {
         res.send(question);
     }
-})
+});
 
 
 //============= | POST | =============//
-app.post
+app.post('/api/quizes', (req, res) => {
+    console.log(`Recieved post request with body = ${JSON.stringify(req.body)}`)
 
+
+    const quiz = {
+
+    } 
+
+})
+
+app.post('/api/questions', (req, res) => {
+    console.log(`Recieved post request for questions`)
+    
+    const schema = {
+        category: Joi.string().required(),
+        difficulty: Joi.string().required(),
+        question: Joi.string().required(),
+        correct_answer: Joi.string().required(),
+        incorrect_answers: Joi.string().required()
+    };
+
+    const result = Joi.validate(req.body, schema);
+    console.log(`Joi results ${result}`);
+
+    //400 Bad Request
+    if (result.error){ return res.status(400).send(result.error.details[0].message); }
+
+    const question = {
+        id: data.questions.length + 1,
+        category: req.body.category , 
+        difficulty: req.body.difficulty , 
+        question: req.body.question , 
+        correct_answer: req.body.correct_answer ,
+        incorrect_answers: req.body.incorrect_answers 
+    };
+     
+    data.questions.push(question);
+    res.send(question);
+});
+
+//TEST CASE
+// {
+//     "category": "Science: Computers",
+//     "type": "multiple",
+//     "difficulty": "easy",
+//     "question": "In computing, what does MIDI stand for?",
+//     "correct_answer": "Musical Instrument Digital Interface",
+//     "incorrect_answers": [
+//         "Musical Interface of Digital Instruments",
+//         "Modular Interface of Digital Instruments",
+//         "Musical Instrument Data Interface"
+//     ]
+// }
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

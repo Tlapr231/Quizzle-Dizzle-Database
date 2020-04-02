@@ -1,11 +1,12 @@
 const Joi = require('joi');
 const express = require('express');
+const cors = require('cors');
+const https = require('https');
+
 const app = express();
-const cors = require('cors'); 
 
 app.use(express.json());
-app.use(cors()); 
-
+app.use(cors());
 
 //Initial Data for testing.
 const data = {
@@ -23,11 +24,42 @@ const data = {
       { id: 7, category: "Entertainment: Film", difficulty: "medium", question: "What is Lilo's last name from Lilo and Stitch?", correct_answer: "Pelekai", incorrect_answers: ["Anoa'i","Kealoha","Ku'ulei"] },
       { id: 8, category: "Entertainment: Film", difficulty: "medium", question: "Which actor and martial artist starred as Colonel Guile in the 1994 action film adaptation of Street Fighter?", correct_answer: "Jean-Claude Van Damme", incorrect_answers: ["Chuck Norris","Steven Seagal","Scott Adkins"] },
       { id: 9, category: "Entertainment: Film", difficulty: "hard", question: "In the film 'Harry Potter and the Order of The Phoenix', why was Harry Potter's scream, after Sirius Black died, muted?", correct_answer: "Too Agonizing", incorrect_answers: ["Too Loud","Too Harsh","Too Violent"] }
-    ] 
+    ]
 }
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Listening on port ${port}...`));
+const categoryNames = {
+  9: "General Knowledge",
+  10: "Entertainment: Books",
+  11: "Entertainment: Film",
+  12: "Entertainment: Music",
+  13: "Entertainment: Musicals & Theatres",
+  14: "Entertainment: Television",
+  15: "Entertainment: Video Games",
+  16: "Entertainment: Board Games",
+  17: "Science & Nature",
+  18: "Science: Computers",
+  19: "Science: Mathematics",
+  20: "Mythology",
+  21: "Sports",
+  22: "Geography",
+  23: "History",
+  24: "Politics",
+  25: "Art",
+  26: "Celebrities",
+  27: "Animals",
+  28: "Vehicles",
+  29: "Entertainment: Comics",
+  30: "Science: Gadgets",
+  31: "Entertainment: Japanese Anime & Manga",
+  32: "Entertainment: Cartoon & Animations"
+}
+
+const port = process.env.PORT || 3001;
+app.listen(port, () => {
+  console.log(`Listening on port ${port}...`);
+  initServer();
+});
+
 
 //===================================//
 //============= | GET | =============//
@@ -56,7 +88,7 @@ app.get('/api/quizes/:id', (req, res) => {
     const quiz = data.quizes.find(q => q.id === parseInt(req.params.id));
     //404 Not Found
     if(!quiz) return res.status(404).send('The quiz with the given ID was not found.');
-    
+
     res.send(quiz);
 });
 
@@ -68,11 +100,11 @@ app.get('/api/questions', (req, res) => {
 
 app.get('/api/questions/:id', (req, res) => {
     console.log(`Fetching Question with id = ${req.params.id}`);
-    
+
     const question = data.questions.find(q => q.id === parseInt(req.params.id));
     //404 Not Found
     if(!question) return res.status(404).send('The question with the given ID was not found.');
-    
+
     res.send(question);
 });
 
@@ -84,19 +116,19 @@ app.get('/api/questions/:id', (req, res) => {
 //QUIZ
 app.post('/api/quizes', (req, res) => {
     console.log(`Recieved post request for quizes`);
-    
+
     //object destructuring on error
     const { error } = validateQuiz(req.body);
-    
+
     //400 Bad Request
-    if (error) return res.status(400).send(error); 
+    if (error) return res.status(400).send(error);
 
     const quiz = {
         id: data.quizes.length + 1,
-        numberOfQuestions: req.body.numberOfQuestions ,  
-        category: req.body.category , 
-        difficulty: req.body.difficulty , 
-        questions: req.body.questions         
+        numberOfQuestions: req.body.numberOfQuestions ,
+        category: req.body.category ,
+        difficulty: req.body.difficulty ,
+        questions: req.body.questions
     };
 
     data.quizes.push(quiz);
@@ -106,26 +138,26 @@ app.post('/api/quizes', (req, res) => {
 //QUESTIONS
 app.post('/api/questions', (req, res) => {
     console.log(`Recieved post request for questions`);
-    
+
     //object destructuring on error
     const { error } = validateQuestion(req.body);
-    
+
     //400 Bad Request
-    if (error) return res.status(400).send(error); 
+    if (error) return res.status(400).send(error);
 
     const question = {
         id: data.questions.length + 1,
-        category: req.body.category ,  
-        difficulty: req.body.difficulty , 
-        question: req.body.question , 
+        category: req.body.category ,
+        difficulty: req.body.difficulty ,
+        question: req.body.question ,
         correct_answer: req.body.correct_answer ,
-        incorrect_answers: req.body.incorrect_answers 
+        incorrect_answers: req.body.incorrect_answers
     };
-     
+
     data.questions.push(question);
     res.send(question);
 });
- 
+
 //===================================//
 //============= | PUT | =============// (update)
 //===================================//
@@ -137,19 +169,19 @@ app.put('/api/quizes/:id', (req, res) => {
     const quiz = data.quizes.find(q => q.id === parseInt(req.params.id));
 
     //404 Not Found
-    if(!quiz) return res.status(404).send('The quiz with the given ID was not found.');  
-    
+    if(!quiz) return res.status(404).send('The quiz with the given ID was not found.');
+
     //object destructuring on error
     const { error } = validateQuiz(req.body);
-    
+
     //400 Bad Request
-    if (error) return res.status(400).send(error); 
+    if (error) return res.status(400).send(error);
 
     quiz.numberOfQuestions = req.body.numberOfQuestions;
     quiz.category = req.body.category;
     quiz.difficulty = req.body.difficulty;
     quiz.questions = req.body.questions;
-    
+
     res.send(question);
 });
 
@@ -160,20 +192,20 @@ app.put('/api/questions/:id', (req, res) => {
     const question = data.questions.find(q => q.id === parseInt(req.params.id));
 
     //404 Not Found
-    if(!question) return res.status(404).send('The question with the given ID was not found.');  
-    
+    if(!question) return res.status(404).send('The question with the given ID was not found.');
+
     //object destructuring on error
     const { error } = validateQuestion(req.body);
-    
+
     //400 Bad Request
-    if (error) return res.status(400).send(error); 
-    
+    if (error) return res.status(400).send(error);
+
     question.category = req.body.category;
     question.difficulty = req.body.difficulty;
     question.question = req.body.question;
     question.correct_answer = req.body.correct_answer;
     question.incorrect_answers = req.body.incorrect_answers;
-    
+
     res.send(question);
 });
 
@@ -187,8 +219,8 @@ app.delete('/api/quizes/:id', (req, res) => {
 
     const quiz = data.quizes.find(q => q.id === parseInt(req.params.id));
     //404 Not Found
-    if(!quiz) { return res.status(404).send('The quiz with the given ID was not found.'); } 
-    
+    if(!quiz) { return res.status(404).send('The quiz with the given ID was not found.'); }
+
     const index = data.quizes.indexOf(quiz);
     data.quizes.splice(index, 1);
 
@@ -201,8 +233,8 @@ app.delete('/api/questions/:id', (req, res) => {
 
     const question = data.questions.find(q => q.id === parseInt(req.params.id));
     //404 Not Found
-    if(!question) { return res.status(404).send('The question with the given ID was not found.'); } 
-    
+    if(!question) { return res.status(404).send('The question with the given ID was not found.'); }
+
     const index = data.questions.indexOf(question);
     data.questions.splice(index, 1);
 
@@ -213,6 +245,74 @@ app.delete('/api/questions/:id', (req, res) => {
 //========== | FUNCTIONS | ==========//
 //===================================//
 
+function initServer(){
+  const categories = [ 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 ] //all category ids for the api
+  let url = ``;
+
+  for (i = 0; i < categories.length; i ++){
+    url = `https://opentdb.com/api.php?amount=10&category=${categories[i]}&type=multiple`
+    request(url, categories[i]);
+  }
+}
+
+
+function request(url, catId){
+  https.get(url, (res) => {
+    let response = '';
+
+    res.on('data', (chunck) => {
+      response += chunck;
+    });
+
+    res.on('end', () => {
+
+      //getting the quiz data and storing it
+      let newQuiz = {
+        id: catId,
+        "numberOfQuestions": 10,
+        category: categoryNames[catId],
+        difficulty: "mixed",
+        questions: [ ]
+      }
+
+      //Getting all the questions and storing them
+      let newQuestions = JSON.parse(cleanText(response)).results;
+
+      for (i = 0 ; i < 10; i++){
+        newQuestions[i].id = catId*10 + i;
+        newQuiz.questions.push(newQuestions[i].id);
+        data.questions.push(newQuestions[i]);
+      }
+
+      data.quizes.push(newQuiz);
+
+    });
+
+  }).on('error', (err) => {
+    console.log(`Error: ${err.message}`);
+  });
+}
+
+//&#039;  === '
+//&rsquo; === '
+//&quot;  === "
+//&shy;   === - TODO
+function cleanText(text)  {
+  while (text.indexOf('&#039;') !== -1){
+    text = text.replace('&#039;', "'");
+  }
+
+  while (text.indexOf('&quot;') !== -1){
+    text = text.replace('&quot;', "'");
+  }
+
+  while (text.indexOf('&rsquo;') !== -1){
+    text = text.replace('&rsquo;', "'");
+  }
+
+  return text;
+}
+
 function validateQuestion(question) {
     const schema = {
         category: Joi.string().required(),
@@ -221,18 +321,18 @@ function validateQuestion(question) {
         correct_answer: Joi.string().required(),
         incorrect_answers: Joi.array().required().length(3)
     };
-    
+
     return Joi.validate(question, schema);
 }
 
-function validateQuiz(quiz) { 
+function validateQuiz(quiz) {
     const schema = {
         numberOfQuestions: Joi.number().required(),
         category: Joi.string().required(),
         difficulty: Joi.string().required(),
         questions: Joi.array().required().length(numberOfQuestions),
     };
-    
+
     return Joi.validate(quiz, schema);
 }
 
